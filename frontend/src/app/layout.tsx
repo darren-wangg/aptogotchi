@@ -2,8 +2,8 @@ import { WalletProvider } from "@/context/WalletProvider";
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { PropsWithChildren } from "react";
-import "nes.css/css/nes.min.css";
 import "./globals.css";
+import Head from "next/head";
 
 const kongtext = localFont({
   src: "./../../public/kongtext.ttf",
@@ -18,6 +18,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en">
+      <Head>
+        <link
+          href="https://unpkg.com/nes.css@2.3.0/css/nes.min.css"
+          rel="stylesheet"
+        />
+      </Head>
       <body className={kongtext.className}>
         <WalletProvider>{children}</WalletProvider>
       </body>
