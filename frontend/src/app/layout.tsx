@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { PropsWithChildren } from "react";
 import "./globals.css";
-import Head from "next/head";
+import { Analytics } from "@vercel/analytics/react";
 import "nes.css/css/nes.min.css";
 
 const kongtext = localFont({
@@ -21,6 +21,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
     <html lang="en">
       <body className={kongtext.className}>
         <WalletProvider>{children}</WalletProvider>
+        <Analytics />
       </body>
     </html>
   );
