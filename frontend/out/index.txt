@@ -1,7 +1,7 @@
 1:HL["/_next/static/media/03f4cb0148379bc4-s.p.ttf",{"as":"font","type":"font/ttf"}]
 2:HL["/_next/static/css/868a44d01c4a027e.css",{"as":"style"}]
 3:HL["/_next/static/css/05debc7fd3a86e96.css",{"as":"style"}]
-0:["q1lNsz_0cVEQfnTBClvaN",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L4",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/868a44d01c4a027e.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/_next/static/css/05debc7fd3a86e96.css","precedence":"next"}]],"$L5"]]]]
+0:["gruayzO7QnFXJNAVvK8Wx",[[["",{"children":["__PAGE__",{}]},"$undefined","$undefined",true],"$L4",[[["$","link","0",{"rel":"stylesheet","href":"/_next/static/css/868a44d01c4a027e.css","precedence":"next"}],["$","link","1",{"rel":"stylesheet","href":"/_next/static/css/05debc7fd3a86e96.css","precedence":"next"}]],"$L5"]]]]
 6:I{"id":3805,"chunks":["664:static/chunks/b56196ea-6e36fd1a0a13e703.js","546:static/chunks/546-f2364a209aba17d9.js","185:static/chunks/app/layout-7cd4d5dc3c9a9bcb.js"],"name":"WalletProvider","async":false}
 7:I{"id":7767,"chunks":["272:static/chunks/webpack-7e596162531016a3.js","971:static/chunks/fd9d1056-375b051db2dcc74f.js","596:static/chunks/596-48929eee83ea91bd.js"],"name":"default","async":false}
 8:I{"id":7920,"chunks":["272:static/chunks/webpack-7e596162531016a3.js","971:static/chunks/fd9d1056-375b051db2dcc74f.js","596:static/chunks/596-48929eee83ea91bd.js"],"name":"default","async":false}

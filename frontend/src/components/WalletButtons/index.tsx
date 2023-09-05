@@ -85,6 +85,7 @@ const WalletView = ({ wallet }: { wallet: Wallet }) => {
           disabled={false}
           key={wallet.name}
           onClick={() => onWalletConnectRequest(wallet.name)}
+          style={{ maxWidth: "300px" }}
         >
           Connect Wallet
         </button>
@@ -96,6 +97,7 @@ const WalletView = ({ wallet }: { wallet: Wallet }) => {
         className={cn(buttonStyles, "opacity-50 cursor-not-allowed")}
         disabled={true}
         key={wallet.name}
+        style={{ maxWidth: "300px" }}
       >
         Connect Wallet - Desktop Only
       </button>
@@ -111,6 +113,7 @@ const WalletView = ({ wallet }: { wallet: Wallet }) => {
         disabled={!isWalletReady}
         key={wallet.name}
         onClick={() => onWalletConnectRequest(wallet.name)}
+        style={{ maxWidth: "300px" }}
       >
         Connect Wallet
       </button>
