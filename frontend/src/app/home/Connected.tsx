@@ -22,6 +22,7 @@ export function Connected() {
     };
 
     const response = await provider.view(payload);
+    console.log("GET APTOGOTCHI: ", response);
     const noPet = ["", "0", "0", "0", "0x"];
 
     if (JSON.stringify(response) !== JSON.stringify(noPet)) {
