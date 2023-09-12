@@ -23,10 +23,10 @@ export const WalletButtons = () => {
           className="bg-gray-50 text-sm rounded-lg block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
           style={{ marginRight: "15px" }}
         >
-          <option selected value="Devnet">
-            Devnet
+          <option value="Devnet">Devnet</option>
+          <option selected value="Testnet">
+            Testnet
           </option>
-          <option value="Testnet">Testnet</option>
           <option value="Mainnet">Mainnet</option>
         </select>
         <div
