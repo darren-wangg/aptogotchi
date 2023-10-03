@@ -11,7 +11,9 @@ module aptogotchi::main {
     use std::vector;
     use aptos_framework::object::{Self};
 
+    // maximum health points: 5 hearts * 2 HP/heart = 10 HP
     const HP_UPPER_BOUND: u64 = 10;
+    // maximum happiness points: 5 stars * 2 points/star = 10 happiness points
     const HAPPINESS_UPPER_BOUND: u64 = 10;
 
     struct AptoGotchi has key {
@@ -21,6 +23,7 @@ module aptogotchi::main {
         happiness: u64,
         mutator_ref: token::MutatorRef,
         burn_ref: token::BurnRef,
+        // keep track of most recent feed/play action, to calculate decay
         last_modified_timestamp: u64,
         parts: vector<u8>
     }
@@ -37,6 +40,7 @@ module aptogotchi::main {
     const APTOGOTCHI_COLLECTION_DESCRIPTION: vector<u8> = b"Aptogotchi Collection Description";
     const APTOGOTCHI_COLLECTION_URI: vector<u8> = b"https://knight.collection.uri";
 
+    // This function is only callable during publishing
     fun init_module(account: &signer) {
         let (token_resource, token_signer_cap) = account::create_resource_account(
             account,
@@ -54,10 +58,12 @@ module aptogotchi::main {
         create_aptogotchi_collection(&token_resource);
     }
 
+    // 
     fun get_token_signer(): signer acquires CollectionCapability {
         account::create_signer_with_capability(&borrow_global<CollectionCapability>(@aptogotchi).capability)
     }
 
+    // Create the collection that will hold all the Aptogotchis
     fun create_aptogotchi_collection(creator: &signer) {
         let description = string::utf8(APTOGOTCHI_COLLECTION_DESCRIPTION);
         let name = string::utf8(APTOGOTCHI_COLLECTION_NAME);
@@ -72,11 +78,13 @@ module aptogotchi::main {
         );
     }
 
+    // Create Aptogotchi token
     public entry fun create_aptogotchi(user: &signer, name: String, parts: vector<u8>) acquires CollectionCapability {
         let uri = string::utf8(APTOGOTCHI_COLLECTION_URI);
         let description = string::utf8(APTOGOTCHI_COLLECTION_DESCRIPTION);
         let token_name = to_string(&address_of(user));
 
+        // create Aptogotchi token object
         let constructor_ref = token::create_named_token(
             &get_token_signer(),
             string::utf8(APTOGOTCHI_COLLECTION_NAME),
@@ -90,6 +98,7 @@ module aptogotchi::main {
         let mutator_ref = token::generate_mutator_ref(&constructor_ref);
         let burn_ref = token::generate_burn_ref(&constructor_ref);
 
+        // initialize/set default Aptogotchi struct values
         let gotchi = AptoGotchi {
             name,
             birthday: timestamp::now_seconds(),
@@ -104,7 +113,8 @@ module aptogotchi::main {
         move_to(&token_signer, gotchi);
     }
 
-    inline fun get_aptogochi_internal(creator_addr: &address): (&AptoGotchi) acquires AptoGotchi {
+    // Get reference to Aptogotchi token object (CAN'T modify the reference)
+    inline fun get_aptogotchi_internal(creator_addr: &address): (&AptoGotchi) acquires AptoGotchi {
         let collection = string::utf8(APTOGOTCHI_COLLECTION_NAME);
         let token_name = to_string(creator_addr);
         let creator = &get_token_signer();
@@ -113,10 +123,12 @@ module aptogotchi::main {
             &collection,
             &token_name,
         );
+
         (borrow_global<AptoGotchi>(token_address))
     }
 
-    inline fun get_aptogochi_internal_mut(creator_addr: &address): (&mut AptoGotchi) acquires AptoGotchi {
+    // Get reference to Aptogotchi token object (CAN modify the reference)
+    inline fun get_aptogotchi_internal_mut(creator_addr: &address): (&mut AptoGotchi) acquires AptoGotchi {
         let collection = string::utf8(APTOGOTCHI_COLLECTION_NAME);
         let token_name = to_string(creator_addr);
         let creator = &get_token_signer();
@@ -125,26 +137,30 @@ module aptogotchi::main {
             &collection,
             &token_name,
         );
+
         (borrow_global_mut<AptoGotchi>(token_address))
     }
 
+    // Returns Aptogotchi's name
     #[view]
     public fun get_name(user_addr: address): String acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal(&user_addr);
 
         gotchi.name
     }
 
+    // Sets Aptogotchi's name
     public entry fun set_name(user_addr: address, name: String) acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
         gotchi.name = name;
 
         gotchi.name;
     }
 
+    // Returns Aptogotchi's health points, after calculating decay
     #[view]
     public fun get_health_points(user_addr: address): u64 acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
 
         // get new baseline (calculate how much health_points has decayed)
         let (hp_decay, _) = calculate_decay(gotchi);
@@ -155,8 +171,13 @@ module aptogotchi::main {
         gotchi.health_points
     }
 
+    // Modify Aptogotchi's health points by hp_difference, after calculating decay
     public entry fun change_health_points(user_addr: address, hp_difference: u64) acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
+
+        // calculate decay first
+        let (hp_decay, _) = calculate_decay(gotchi);
+        gotchi.health_points = gotchi.health_points - hp_decay;
 
         gotchi.health_points = if (gotchi.health_points + hp_difference > HP_UPPER_BOUND) {
             HP_UPPER_BOUND
@@ -164,19 +185,17 @@ module aptogotchi::main {
             gotchi.health_points + hp_difference
         };
 
-        let (hp_decay, _) = calculate_decay(gotchi);
-        gotchi.health_points = gotchi.health_points - hp_decay;
-
         gotchi.last_modified_timestamp = timestamp::now_seconds();
 
         gotchi.health_points;
     }
 
+    // Returns Aptogotchi's happiness, after calculating decay
     #[view]
     public fun get_happiness(user_addr: address): u64 acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
 
-        // get new baseline
+        // get new baseline (calculate how much happiness has decayed)
         let (_, happiness_decay) = calculate_decay(gotchi);
         gotchi.happiness = gotchi.happiness - happiness_decay;
 
@@ -185,8 +204,13 @@ module aptogotchi::main {
         gotchi.happiness
     }
 
+    // Modify Aptogotchi's happiness by happiness_difference, after calculating decay
     public entry fun change_happiness(user_addr: address, happiness_difference: u64) acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
+
+        // calculate decay first
+        let (_, happiness_decay) = calculate_decay(gotchi);
+        gotchi.happiness = gotchi.happiness - happiness_decay;
 
         gotchi.happiness = if (gotchi.happiness + happiness_difference > HAPPINESS_UPPER_BOUND) {
             HAPPINESS_UPPER_BOUND
@@ -194,14 +218,59 @@ module aptogotchi::main {
             gotchi.happiness + happiness_difference
         };
 
-        let (_, happiness_decay) = calculate_decay(gotchi);
-        gotchi.happiness = gotchi.happiness - happiness_decay;
-
         gotchi.last_modified_timestamp = timestamp::now_seconds();
 
         gotchi.happiness;
     }
 
+    // Returns all fields for this Aptogotchi
+    #[view]
+    public fun get_aptogotchi(user_addr: address): (String, u64, u64, u64, vector<u8>) acquires AptoGotchi, CollectionCapability {
+        let collection = string::utf8(APTOGOTCHI_COLLECTION_NAME);
+        let token_name = to_string(&user_addr);
+        let creator = &get_token_signer();
+        let token_address = token::create_token_address(
+            &signer::address_of(creator),
+            &collection,
+            &token_name,
+        );
+
+        let has_gotchi = exists<AptoGotchi>(token_address);
+        // if this address doesn't have an Aptogotchi, return empty values
+        if (!has_gotchi) {
+            return (string::utf8(b""), 0, 0, 0, vector::empty<u8>())
+        };
+
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
+
+        // calculate decays first
+        let (hp_decay, _) = calculate_decay(gotchi);
+        gotchi.health_points = gotchi.health_points - hp_decay;
+        let (_, happiness_decay) = calculate_decay(gotchi);
+        gotchi.happiness = gotchi.happiness - happiness_decay;
+
+        (gotchi.name, gotchi.birthday, gotchi.health_points, gotchi.happiness, gotchi.parts)
+    }
+
+    // Returns Aptogotchi's body parts
+    #[view]
+    public fun get_parts(user_addr: address): vector<u8> acquires AptoGotchi, CollectionCapability {
+        let gotchi = get_aptogotchi_internal(&user_addr);
+
+        gotchi.parts
+    }
+
+    // Sets Aptogotchi's body parts
+    public entry fun set_parts(user_addr: address, parts: vector<u8>) acquires AptoGotchi, CollectionCapability {
+        let gotchi = get_aptogotchi_internal_mut(&user_addr);
+        gotchi.parts = parts;
+
+        gotchi.parts;
+    }
+
+    // === HELPER FUNCTIONS ===
+
+    // Calculate how much time has passed since last_modified_timestamp
     fun calculate_timestamp_diff(gotchi: &AptoGotchi): u64 {
         let current_timestamp = timestamp::now_seconds();
         let timestamp_diff = current_timestamp - gotchi.last_modified_timestamp;
@@ -210,7 +279,7 @@ module aptogotchi::main {
         timestamp_diff_formatted
     }
 
-    
+    // Calculate how much decay has occurred since last_modified_timestamp
     fun calculate_decay(gotchi: &AptoGotchi): (u64, u64) {
         let minutes_passed = calculate_timestamp_diff(gotchi);
 
@@ -227,45 +296,5 @@ module aptogotchi::main {
         };
 
         (hp_decay, happiness_decay)
-    }
-
-    #[view]
-    public fun get_aptogotchi(user_addr: address): (String, u64, u64, u64, vector<u8>) acquires AptoGotchi, CollectionCapability {
-        let collection = string::utf8(APTOGOTCHI_COLLECTION_NAME);
-        let token_name = to_string(&user_addr);
-        let creator = &get_token_signer();
-        let token_address = token::create_token_address(
-            &signer::address_of(creator),
-            &collection,
-            &token_name,
-        );
-        let has_gotchi = exists<AptoGotchi>(token_address);
-
-        if (!has_gotchi) {
-            return (string::utf8(b""), 0, 0, 0, vector::empty<u8>())
-        };
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
-
-        let (hp_decay, _) = calculate_decay(gotchi);
-        gotchi.health_points = gotchi.health_points - hp_decay;
-
-        let (_, happiness_decay) = calculate_decay(gotchi);
-        gotchi.happiness = gotchi.happiness - happiness_decay;
-
-        (gotchi.name, gotchi.birthday, gotchi.health_points, gotchi.happiness, gotchi.parts)
-    }
-
-    #[view]
-    public fun get_parts(user_addr: address): vector<u8> acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal(&user_addr);
-
-        gotchi.parts
-    }
-
-    public entry fun set_parts(user_addr: address, parts: vector<u8>) acquires AptoGotchi, CollectionCapability {
-        let gotchi = get_aptogochi_internal_mut(&user_addr);
-        gotchi.parts = parts;
-
-        gotchi.parts;
     }
 }
