@@ -6,6 +6,8 @@ import { Pet } from ".";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { Network, Provider } from "aptos";
+import { AptosNamesConnector } from "@aptos-labs/aptos-names-connector";
+import "@aptos-labs/aptos-names-connector/dist/index.css";
 
 export interface PetDetailsProps {
   pet: Pet;
@@ -19,6 +21,10 @@ export function PetDetails({ pet, setPet }: PetDetailsProps) {
   const [transactionInProgress, setTransactionInProgress] =
     useState<boolean>(false);
   const { account, network, signAndSubmitTransaction } = useWallet();
+  const [owner, setOwner] = useState<string>(
+    account?.ansName || account?.address || ""
+  );
+  console.log("WALLET: ", useWallet());
 
   const canSave = newName !== pet.name;
 
@@ -69,6 +75,24 @@ export function PetDetails({ pet, setPet }: PetDetailsProps) {
               <AiFillSave className=" h-8 w-8 drop-shadow-sm" />
             </button>
           </div>
+        </div>
+        <div className="nes-field">
+          <label htmlFor="owner_field">Owner</label>
+          <input
+            type="text"
+            id="owner_field"
+            className="nes-input"
+            disabled
+            value={owner}
+          />
+          <button type="button" className="nes-btn is-primary">
+            <AptosNamesConnector
+              onSignTransaction={signAndSubmitTransaction}
+              isWalletConnected={true}
+              network="testnet"
+              buttonLabel="Claim"
+            />
+          </button>
         </div>
       </div>
       <div className="flex flex-col w-6/12">

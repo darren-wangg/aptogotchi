@@ -22,6 +22,17 @@ body {
   border-image-repeat: stretch !important;
 }
 
+.ans-connector-button {
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 12px 16px;
+}
+
 @media (max-width: 768px) {
   .btn-small {
     padding: 8px 16px;
