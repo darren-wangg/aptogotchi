@@ -297,4 +297,25 @@ module aptogotchi::main {
 
         (hp_decay, happiness_decay)
     }
+
+    // === EVENTS ===
+
+    // ==== TESTS ====
+    #[test_only]
+    public fun init_module_for_test(account: &signer) {
+        init_module(account);
+    }
+
+    #[test(caller = @aptogotchi)]
+    public fun test_create_aptogotchi(caller: &signer) {
+        let name = string::utf8(b"Aptogotchi");
+        let parts = vector[0, 0, 0];
+        create_aptogotchi(&caller, name, parts);
+
+        // verify default struct values
+        assert!(get_name(&caller) == name, 1);
+        assert!(get_health_points(&caller) == HP_UPPER_BOUND, 1);
+        assert!(get_happiness(&caller) == HAPPINESS_UPPER_BOUND, 1);
+        assert!(get_parts(&caller) == parts, 1);
+    }
 }
