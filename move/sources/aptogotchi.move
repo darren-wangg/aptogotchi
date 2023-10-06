@@ -301,21 +301,30 @@ module aptogotchi::main {
     // === EVENTS ===
 
     // ==== TESTS ====
+    use aptos_framework::account::create_account_for_test;
+
     #[test_only]
     public fun init_module_for_test(account: &signer) {
         init_module(account);
     }
 
-    #[test(caller = @aptogotchi)]
+    #[test(user = 0x123)]
     public fun test_create_aptogotchi(caller: &signer) {
         let name = string::utf8(b"Aptogotchi");
         let parts = vector[0, 0, 0];
-        create_aptogotchi(&caller, name, parts);
+
+        // create user
+        create_account_for_test(signer::address_of(user));
+
+        // user creates aptogotchi
+        create_aptogotchi(&user, name, parts);
 
         // verify default struct values
-        assert!(get_name(&caller) == name, 1);
-        assert!(get_health_points(&caller) == HP_UPPER_BOUND, 1);
-        assert!(get_happiness(&caller) == HAPPINESS_UPPER_BOUND, 1);
-        assert!(get_parts(&caller) == parts, 1);
+        assert!(get_name(&user) == name, 1);
+        assert!(get_health_points(&user) == HP_UPPER_BOUND, 1);
+        assert!(get_happiness(&user) == HAPPINESS_UPPER_BOUND, 1);
+        assert!(get_parts(&user) == parts, 1);
     }
+
+    // test decay
 }
