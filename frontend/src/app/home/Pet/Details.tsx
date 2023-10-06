@@ -85,14 +85,14 @@ export function PetDetails({ pet, setPet }: PetDetailsProps) {
             disabled
             value={owner}
           />
-          <button type="button" className="nes-btn is-primary">
+          {!account?.ansName && (
             <AptosNamesConnector
               onSignTransaction={signAndSubmitTransaction}
               isWalletConnected={true}
               network="testnet"
-              buttonLabel="Claim"
+              buttonLabel="Claim Your Aptos Name"
             />
-          </button>
+          )}
         </div>
       </div>
       <div className="flex flex-col w-6/12">
